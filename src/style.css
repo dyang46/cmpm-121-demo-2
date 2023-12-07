@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #5e5b5b;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -37,11 +37,20 @@ h1 {
   line-height: 1.1;
 }
 
+
+
 #app {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+canvas {
+  width: 256px;
+  height: 256px;  
+  border: 2px solid black;
+  border-radius: 8px;
 }
 
 button {
@@ -64,6 +73,7 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
 
 @media (prefers-color-scheme: light) {
   :root {
