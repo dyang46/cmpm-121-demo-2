@@ -104,7 +104,7 @@ canvas.addEventListener("mousemove", (e) => {
 
 
 app.append(canvas);
-app.append(undoButton, redoButton);
+//app.append(undoButton, redoButton);
 
 function UpdateCanvas() {
 
