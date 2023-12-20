@@ -107,9 +107,8 @@ app.append(canvas);
 app.append(undoButton, redoButton);
 
 function UpdateCanvas() {
-
   ctx.clearRect(0, 0, canvas.width, canvas.height); //to clear
-  
+  lines = [];  
 }
 
 function getCanvasCoordinates(event: MouseEvent): { x: number; y: number } { //get the right position
