@@ -1,6 +1,8 @@
 import "./style.css";
 
 const app: HTMLDivElement = document.querySelector("#app")!;
+//const app1: HTMLDivElement = document.querySelector("#app")!;
+
 
 const gameName = "My Drawing Board";
 
@@ -21,6 +23,14 @@ undoButton.innerHTML = "UNDO";
 const redoButton = document.createElement("button");
 redoButton.innerHTML = "REDO";
 
+const thinMarker = document.createElement("button");
+thinMarker.innerHTML = "Thiner";
+
+const thickMarker = document.createElement("button");
+thickMarker.innerHTML = "Thicker";
+
+const brushSize = document.createElement("div");
+brushSize.innerHTML = "Brush Size: 1";
 app.append(header, clearButton);
 
 
@@ -31,8 +41,10 @@ const ctx = canvas.getContext('2d')!;
 
 // Drawing variables
 let isDrawing = false;
-ctx.lineWidth = 1; // Hardcoded line width for now
+//ctx.lineWidth = 1; // Hardcoded line width for now
 ctx.strokeStyle = '#000000'; // Hardcoded line color for now
+let widthRate = 1;
+ctx.lineWidth = widthRate;
 
 //let lines: { x: number; y: number }[][] = []; //all actions
 //let currentLine: { x: number; y: number }[] = []; // the most recent action
@@ -46,7 +58,7 @@ let redoList: MarkerLine[] = [];
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
     const { x, y } = getCanvasCoordinates(e);
-    currentLine = new MarkerLine(x, y);
+    currentLine = new MarkerLine(x, y, widthRate);
     lines.push(currentLine);
 });
 
@@ -88,18 +100,30 @@ redoButton.addEventListener("click", () => {
     }
 });
 
+thickMarker.addEventListener("click", () => {
+  widthRate += 1;
+  brushSize.textContent = `size: ${widthRate}`;
+});
 
+thinMarker.addEventListener("click", () => {
+  if (widthRate > 1) {
+    widthRate -= 1;
+  }
+  brushSize.textContent = `size: ${widthRate}`;
+});
 
 app.append(canvas);
-app.append(undoButton, redoButton);
+app.append(undoButton, redoButton,thickMarker, thinMarker, brushSize);
 
 /////Class//// 
-/////this class is given by chatgpt
+/////the class structure is from chatGPT
 class MarkerLine {
   private pos: { x: number; y: number }[] = [];
-
-  constructor(initX: number, initY: number) {
-      this.pos.push({ x: initX, y: initY });
+  private thick: number;
+  constructor(initX: number, initY: number,thick: number) {
+    this.pos.push({ x: initX, y: initY });
+    this.thick = thick;
+    
   }
 
   drag(x: number, y: number): void {
@@ -111,6 +135,7 @@ class MarkerLine {
       return;
     }
     ctx.beginPath();
+    ctx.lineWidth = this.thick;
     this.pos.forEach((pos, index) => {
         if (index === 0) {
             ctx.moveTo(pos.x, pos.y);
