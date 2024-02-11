@@ -29,9 +29,13 @@ thinMarker.innerHTML = "Thiner";
 const thickMarker = document.createElement("button");
 thickMarker.innerHTML = "Thicker";
 
+const changeTool = document.createElement("button");
+changeTool.innerHTML = "Tool/";
+
 const brushSize = document.createElement("div");
-brushSize.innerHTML = "Brush Size: 1";
-app.append(header, clearButton);
+brushSize.innerHTML = "Current: Marker  Size: 1";
+
+app.append(header, clearButton,undoButton,redoButton);
 
 
 
@@ -53,7 +57,7 @@ ctx.lineWidth = widthRate;
 let currentLine: MarkerLine | null;
 let lines: MarkerLine[] = [];
 let redoList: MarkerLine[] = [];
-
+let currentTool: "Marker" | "Sticker" = "Marker";
 
 canvas.addEventListener("mousedown", (e) => {
     isDrawing = true;
@@ -102,18 +106,28 @@ redoButton.addEventListener("click", () => {
 
 thickMarker.addEventListener("click", () => {
   widthRate += 1;
-  brushSize.textContent = `size: ${widthRate}`;
+  brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
 
 thinMarker.addEventListener("click", () => {
   if (widthRate > 1) {
     widthRate -= 1;
   }
-  brushSize.textContent = `size: ${widthRate}`;
+  brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
+});
+
+changeTool.addEventListener("click", () => {
+  if (currentTool =="Marker") {
+    currentTool = "Sticker";
+  } else {
+    currentTool = "Marker";
+  }
+  brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
 
 app.append(canvas);
-app.append(undoButton, redoButton,thickMarker, thinMarker, brushSize);
+//app.append(undoButton, redoButton);
+app.append(changeTool,thickMarker, thinMarker, brushSize);
 
 /////Class//// 
 /////the class structure is from chatGPT
