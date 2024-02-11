@@ -13,17 +13,15 @@ const canvasBlock = document.createElement("canvas"); // the canvas space
 
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "CLEAR";
+clearButton.addEventListener('click', UpdateCanvas); // for clearing the canvas
 
 const undoButton = document.createElement("button");
 undoButton.innerHTML = "UNDO";
-
 
 const redoButton = document.createElement("button");
 redoButton.innerHTML = "REDO";
 
 app.append(header, clearButton);
-
-clearButton.addEventListener('click', UpdateCanvas); // for clearing the canvas
 
 
 
@@ -36,39 +34,38 @@ let isDrawing = false;
 ctx.lineWidth = 1; // Hardcoded line width for now
 ctx.strokeStyle = '#000000'; // Hardcoded line color for now
 
-let lines: { x: number; y: number }[][] = []; //all actions
-let currentLine: { x: number; y: number }[] = []; // the most recent action
-let redoList: { x: number; y: number }[][] = []; // the list for redo
+//let lines: { x: number; y: number }[][] = []; //all actions
+//let currentLine: { x: number; y: number }[] = []; // the most recent action
+//let redoList: { x: number; y: number }[][] = []; // the list for redo
 
-canvas.addEventListener("mousedown", (e) => { //start drawing if mouse down
-  isDrawing = true;
-  const { x, y } = getCanvasCoordinates(e);
-  currentLine = [{ x, y }];
-  lines.push(currentLine);
+let currentLine: MarkerLine | null;
+let lines: MarkerLine[] = [];
+let redoList: MarkerLine[] = [];
+
+
+canvas.addEventListener("mousedown", (e) => {
+    isDrawing = true;
+    const { x, y } = getCanvasCoordinates(e);
+    currentLine = new MarkerLine(x, y);
+    lines.push(currentLine);
 });
 
-canvas.addEventListener("mouseup", () => { //stop drawing if mouse up or leave
-  isDrawing = false;
+canvas.addEventListener("mousemove", (e) => {
+    if (!isDrawing || !currentLine) return;
+    const { x, y } = getCanvasCoordinates(e);
+    currentLine.drag(x, y);
+    canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
-canvas.addEventListener("mouseout", () => {
-  isDrawing = false;
+canvas.addEventListener("mouseup", () => {
+    isDrawing = false;
+    currentLine = null;
+    redoList = []; // Clear redo stack on new drawing
 });
 
-canvas.addEventListener("drawing-changed", () => { //
+canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  lines.forEach(line => {
-      ctx.beginPath();
-      line.forEach((point, index) => {
-          if (index === 0) {
-              ctx.moveTo(point.x, point.y);
-          } else {
-              ctx.lineTo(point.x, point.y);
-          }
-      });
-      ctx.stroke();
-  });
-  console.log("Positions:", lines);
+  lines.forEach(line => line.display(ctx));
 });
 
 undoButton.addEventListener("click", () => {
@@ -91,20 +88,40 @@ redoButton.addEventListener("click", () => {
     }
 });
 
-canvas.addEventListener("mousemove", (e) => {
-  if (!isDrawing) {
-    return;
-  }
-  const { x, y } = getCanvasCoordinates(e);
-  currentLine.push({ x, y });
-  redoList = []; 
-  canvas.dispatchEvent(new Event("drawing-changed"));
-});
-
 
 
 app.append(canvas);
 app.append(undoButton, redoButton);
+
+/////Class//// 
+/////this class is given by chatgpt
+class MarkerLine {
+  private pos: { x: number; y: number }[] = [];
+
+  constructor(initX: number, initY: number) {
+      this.pos.push({ x: initX, y: initY });
+  }
+
+  drag(x: number, y: number): void {
+      this.pos.push({ x, y });
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+    if (this.pos.length === 0) {        
+      return;
+    }
+    ctx.beginPath();
+    this.pos.forEach((pos, index) => {
+        if (index === 0) {
+            ctx.moveTo(pos.x, pos.y);
+        } else {
+            ctx.lineTo(pos.x, pos.y);
+        }
+    });
+    ctx.stroke();
+  }
+}
+/////Functions////
 
 function UpdateCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); //to clear
