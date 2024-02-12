@@ -54,29 +54,49 @@ ctx.lineWidth = widthRate;
 //let currentLine: { x: number; y: number }[] = []; // the most recent action
 //let redoList: { x: number; y: number }[][] = []; // the list for redo
 
-let currentLine: MarkerLine | null;
+let currentLine: MarkerLine | null = null;
 let lines: MarkerLine[] = [];
 let redoList: MarkerLine[] = [];
 let currentTool: "Marker" | "Sticker" = "Marker";
+let previewTool: Preview | null = null;
 
 canvas.addEventListener("mousedown", (e) => {
-    isDrawing = true;
-    const { x, y } = getCanvasCoordinates(e);
-    currentLine = new MarkerLine(x, y, widthRate);
-    lines.push(currentLine);
+  isDrawing = true;
+  const { x, y } = getCanvasCoordinates(e);
+  currentLine = new MarkerLine(x, y, widthRate);
+  lines.push(currentLine);
+  //canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if (!isDrawing || !currentLine) return;
-    const { x, y } = getCanvasCoordinates(e);
+  const { x, y } = getCanvasCoordinates(e);
+  
+  if (!isDrawing || !currentLine) {
+    previewTool = new Preview(x, y, "Marker");
+    previewTool.draw(ctx);
+
+  } else {
+
     currentLine.drag(x, y);
     canvas.dispatchEvent(new Event("drawing-changed"));
+  }
+
 });
 
 canvas.addEventListener("mouseup", () => {
-    isDrawing = false;
-    currentLine = null;
-    redoList = []; // Clear redo stack on new drawing
+  isDrawing = false;
+  currentLine = null;
+  redoList = []; // Clear redo stack on new drawing
+  canvas.dispatchEvent(new Event("drawing-changed"));
+  
+});
+
+canvas.addEventListener("mouseleave", () => {
+  isDrawing = false;
+  currentLine = null;
+  redoList = []; // Clear redo stack on new drawing
+  canvas.dispatchEvent(new Event("drawing-changed"));
+  
 });
 
 canvas.addEventListener("drawing-changed", () => {
@@ -161,6 +181,26 @@ class MarkerLine {
   }
 }
 /////Functions////
+class Preview{
+  private x: number;
+  private y: number;
+  private toolType: string;
+  constructor(x: number, y: number, toolType: string) {
+    this.x = x;
+    this.y = y;
+    this.toolType = toolType;
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+ 
+  canvas.dispatchEvent(new Event("drawing-changed"));
+
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, widthRate, 0, Math.PI * 2); 
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; 
+  ctx.stroke();
+}
+}
 
 function UpdateCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); //to clear
