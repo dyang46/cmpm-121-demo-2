@@ -35,6 +35,15 @@ changeTool.innerHTML = "Tool/";
 const brushSize = document.createElement("div");
 brushSize.innerHTML = "Current: Marker  Size: 1";
 
+const firstSticker = document.createElement("button");
+firstSticker.innerHTML = "🎆";
+
+const secondSticker = document.createElement("button");
+secondSticker.innerHTML = "Tool/";
+
+const thirdSticker = document.createElement("button");
+thirdSticker.innerHTML = "Tool/";
+
 app.append(header, clearButton,undoButton,redoButton);
 
 
@@ -49,10 +58,6 @@ let isDrawing = false;
 ctx.strokeStyle = '#000000'; // Hardcoded line color for now
 let widthRate = 1;
 ctx.lineWidth = widthRate;
-
-//let lines: { x: number; y: number }[][] = []; //all actions
-//let currentLine: { x: number; y: number }[] = []; // the most recent action
-//let redoList: { x: number; y: number }[][] = []; // the list for redo
 
 let currentLine: MarkerLine | null = null;
 let lines: MarkerLine[] = [];
@@ -104,6 +109,11 @@ canvas.addEventListener("drawing-changed", () => {
   lines.forEach(line => line.display(ctx));
 });
 
+canvas.addEventListener("tool-moved", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  lines.forEach(line => line.display(ctx));
+});
+
 undoButton.addEventListener("click", () => {
     if (lines.length > 0) {
         const lastLine = lines.pop();
@@ -124,11 +134,13 @@ redoButton.addEventListener("click", () => {
     }
 });
 
+//thickness +1 for marker
 thickMarker.addEventListener("click", () => {
   widthRate += 1;
   brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
 
+//thickness -1 for marker
 thinMarker.addEventListener("click", () => {
   if (widthRate > 1) {
     widthRate -= 1;
@@ -145,9 +157,10 @@ changeTool.addEventListener("click", () => {
   brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
 
-app.append(canvas);
+app.appendChild(canvas);
 //app.append(undoButton, redoButton);
 app.append(changeTool,thickMarker, thinMarker, brushSize);
+app.append(firstSticker);
 
 /////Class//// 
 /////the class structure is from chatGPT
@@ -180,7 +193,8 @@ class MarkerLine {
     ctx.stroke();
   }
 }
-/////Functions////
+/////END////
+
 class Preview{
   private x: number;
   private y: number;
@@ -193,25 +207,27 @@ class Preview{
 
   draw(ctx: CanvasRenderingContext2D) {
  
-  canvas.dispatchEvent(new Event("drawing-changed"));
-
-  ctx.beginPath();
-  ctx.arc(this.x, this.y, widthRate, 0, Math.PI * 2); 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; 
-  ctx.stroke();
+    canvas.dispatchEvent(new Event("tool-moved"));
+    if (this.toolType == "Marker") {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, widthRate, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
 }
 }
 
+//to clear the canvas
 function UpdateCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); //to clear
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   lines = [];  
 }
 
-function getCanvasCoordinates(event: MouseEvent): { x: number; y: number } { //get the right position
-const canvasRect = canvas.getBoundingClientRect();
-const scaleX = canvas.width / canvasRect.width;
-const scaleY = canvas.height / canvasRect.height;
-const x = (event.clientX - canvasRect.left) * scaleX;
-const y = (event.clientY - canvasRect.top) * scaleY;
-return { x, y };
+//Get the correct mouse position
+function getCanvasCoordinates(event: MouseEvent): { x: number; y: number } { 
+  const canvasRect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / canvasRect.width;
+  const scaleY = canvas.height / canvasRect.height;
+  const x = (event.clientX - canvasRect.left) * scaleX;
+  const y = (event.clientY - canvasRect.top) * scaleY;
+  return { x, y };
 }
