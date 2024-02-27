@@ -56,16 +56,16 @@ app.append(header, clearButton,undoButton,redoButton);
 const canvas = canvasBlock as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
-// Drawing variables
+
 let isDrawing = false;
 
-let hue = parseInt(slider.value);
-let widthRate = 1;
-ctx.lineWidth = widthRate;
+let hue = parseInt(slider.value); //fpr color 
+let widthRate = 1; //default width
+ctx.lineWidth = widthRate; 
 
 let currentLine: MarkerLine | null = null;
 let lines: MarkerLine[] = []; // all drawn lines
-let redoList: MarkerLine[] = [];
+let redoList: MarkerLine[] = [];//redo stack
 let currentTool: "Marker" | "Sticker" = "Marker";
 let currentSticker: string | "🎆" = "🎆";
 let userInput: string | null = null;
