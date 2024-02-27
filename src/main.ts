@@ -168,8 +168,10 @@ thinMarker.addEventListener("click", () => {
 changeTool.addEventListener("click", () => {
   if (currentTool =="Marker") {
     currentTool = "Sticker";
+    changeTool.innerHTML = "Marker";
   } else {
     currentTool = "Marker";
+    changeTool.innerHTML = "Sticker";
   }
   brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
