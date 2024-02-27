@@ -35,6 +35,9 @@ changeTool.innerHTML = "Tool/";
 const custSticker = document.createElement("button");
 custSticker.innerHTML = "*Magic Sticker*";
 
+const exportButton = document.createElement("button");
+exportButton.innerHTML = "High-res Export";
+
 const brushSize = document.createElement("div");
 brushSize.innerHTML = "Current: Marker  Size: 1";
 
@@ -66,7 +69,7 @@ canvas.width = 256;
 canvas.height = 256;
 
 stickerList.forEach((name) => {
-  addSticker(name);
+  AddSticker(name);
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -177,8 +180,25 @@ custSticker.addEventListener("click", () => {
   userInput = note;
   if (userInput) {
     stickerList.push(userInput);
-    addSticker(userInput);
+    AddSticker(userInput);
   }
+});
+
+exportButton.addEventListener("click", () => {
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = 1024;
+  tempCanvas.height = 1024;
+  const tempCtx = tempCanvas.getContext("2d");
+  if (tempCtx) {
+    tempCtx.scale(4, 4);
+    lines.forEach((MarkerLine) => {
+      MarkerLine.display(tempCtx);
+    });
+  }
+  const anchor = document.createElement("a");
+  anchor.href = tempCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
 });
 
 app.appendChild(canvas);
@@ -186,6 +206,7 @@ app.appendChild(canvas);
 app.append(changeTool,thickMarker, thinMarker, brushSize);
 app.append(custSticker);
 app.appendChild(stickerBox);
+app.append(exportButton);
 
 /////Class//// 
 /////the class structure is from chatGPT
@@ -218,7 +239,8 @@ class MarkerLine {
     ctx.stroke();    
   }
 }
-/////END////
+/////the end of citing
+
 
 class StickerPos extends MarkerLine {
   private content: string; 
@@ -286,16 +308,27 @@ function getCanvasCoordinates(event: MouseEvent): { x: number; y: number } {
   return { x, y };
 }
 
-
-function addSticker(name: string) {
+//To add sticker button
+function AddSticker(name: string) {
   const button = document.createElement('button');
   button.innerHTML = name;
   button.id = name;
   button.addEventListener('click', () => {
-    currentSticker = name;
-  })
-
+    currentSticker = button.id;
+    canvas.dispatchEvent(new Event("tool-moved"));
+  });
+  button.addEventListener('dblclick', () => {
+    let note = prompt("New Input *v*", name);
+    if (note) {
+      button.innerHTML = note;
+      button.id = note;
+    }
+  });
   stickerBox.appendChild(button);
   
 }
 
+
+
+
+ 
