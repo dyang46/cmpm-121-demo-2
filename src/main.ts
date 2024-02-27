@@ -32,21 +32,17 @@ thickMarker.innerHTML = "Thicker";
 const changeTool = document.createElement("button");
 changeTool.innerHTML = "Tool/";
 
+const custSticker = document.createElement("button");
+custSticker.innerHTML = "*Magic Sticker*";
+
 const brushSize = document.createElement("div");
 brushSize.innerHTML = "Current: Marker  Size: 1";
 
-const firstSticker = document.createElement("button");
-firstSticker.innerHTML = "🎆";
+const stickerBox = document.createElement("div");
 
-const secondSticker = document.createElement("button");
-secondSticker.innerHTML = "Tool/";
-
-const thirdSticker = document.createElement("button");
-thirdSticker.innerHTML = "Tool/";
+const stickerList = [ "🎆", "🎇", "💟"];
 
 app.append(header, clearButton,undoButton,redoButton);
-
-
 
 //canvas + content
 const canvas = canvasBlock as HTMLCanvasElement;
@@ -63,13 +59,28 @@ let currentLine: MarkerLine | null = null;
 let lines: MarkerLine[] = [];
 let redoList: MarkerLine[] = [];
 let currentTool: "Marker" | "Sticker" = "Marker";
+let currentSticker: string | "🎆" = "🎆";
+let userInput: string | null = null;
 let previewTool: Preview | null = null;
+canvas.width = 256;
+canvas.height = 256;
+
+stickerList.forEach((name) => {
+  addSticker(name);
+});
 
 canvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   const { x, y } = getCanvasCoordinates(e);
-  currentLine = new MarkerLine(x, y, widthRate);
-  lines.push(currentLine);
+  if (currentTool== "Marker") {
+    currentLine = new MarkerLine(x, y, widthRate);
+    lines.push(currentLine);
+  } else {
+    currentLine = new StickerPos(x, y, widthRate, currentSticker);
+    lines.push(currentLine);
+  }
+    
+  
   //canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
@@ -77,11 +88,15 @@ canvas.addEventListener("mousemove", (e) => {
   const { x, y } = getCanvasCoordinates(e);
   
   if (!isDrawing || !currentLine) {
-    previewTool = new Preview(x, y, "Marker");
-    previewTool.draw(ctx);
+    if (currentTool == "Marker") {
+      previewTool = new Preview(x, y, "Marker");
+      previewTool.draw(ctx);
+    } else {
+      previewTool = new Preview(x, y, "Sticker");
+      previewTool.draw(ctx);
+    }
 
   } else {
-
     currentLine.drag(x, y);
     canvas.dispatchEvent(new Event("drawing-changed"));
   }
@@ -157,10 +172,20 @@ changeTool.addEventListener("click", () => {
   brushSize.textContent = `Current: ${currentTool} Size: ${widthRate}`;
 });
 
+custSticker.addEventListener("click", () => {
+  let note = prompt("Input plz","🧽");
+  userInput = note;
+  if (userInput) {
+    stickerList.push(userInput);
+    addSticker(userInput);
+  }
+});
+
 app.appendChild(canvas);
 //app.append(undoButton, redoButton);
 app.append(changeTool,thickMarker, thinMarker, brushSize);
-app.append(firstSticker);
+app.append(custSticker);
+app.appendChild(stickerBox);
 
 /////Class//// 
 /////the class structure is from chatGPT
@@ -169,8 +194,7 @@ class MarkerLine {
   private thick: number;
   constructor(initX: number, initY: number,thick: number) {
     this.pos.push({ x: initX, y: initY });
-    this.thick = thick;
-    
+    this.thick = thick;    
   }
 
   drag(x: number, y: number): void {
@@ -178,22 +202,49 @@ class MarkerLine {
   }
 
   display(ctx: CanvasRenderingContext2D): void {
-    if (this.pos.length === 0) {        
+    if (this.pos.length === 0) {
       return;
     }
+      
     ctx.beginPath();
     ctx.lineWidth = this.thick;
     this.pos.forEach((pos, index) => {
-        if (index === 0) {
-            ctx.moveTo(pos.x, pos.y);
-        } else {
-            ctx.lineTo(pos.x, pos.y);
-        }
+      if (index === 0) {
+        ctx.moveTo(pos.x, pos.y);
+      } else {
+        ctx.lineTo(pos.x, pos.y);
+      }
     });
-    ctx.stroke();
+    ctx.stroke();    
   }
 }
 /////END////
+
+class StickerPos extends MarkerLine {
+  private content: string; 
+  private x: number;
+  private y: number;
+  private initSize: number;
+  constructor(initX: number, initY: number,thick: number,content: string) {
+    super(initX,initY,thick);
+    this.x = initX;
+    this.y = initY;
+    this.content = content; 
+    this.initSize = thick;
+  }
+
+  drag(x: number, y: number): void {
+    this.x = x;
+    this.y = y;
+
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+
+    ctx.font = `${this.initSize*10}px Arial`;
+    ctx.fillText(this.content, this.x,this.y);
+  }
+}
 
 class Preview{
   private x: number;
@@ -212,6 +263,9 @@ class Preview{
       ctx.beginPath();
       ctx.arc(this.x, this.y, widthRate, 0, 2 * Math.PI);
       ctx.stroke();
+    } else {
+      ctx.font = `${widthRate*10}px Arial`;
+      ctx.fillText(currentSticker, this.x, this.y);
     }
 }
 }
@@ -231,3 +285,17 @@ function getCanvasCoordinates(event: MouseEvent): { x: number; y: number } {
   const y = (event.clientY - canvasRect.top) * scaleY;
   return { x, y };
 }
+
+
+function addSticker(name: string) {
+  const button = document.createElement('button');
+  button.innerHTML = name;
+  button.id = name;
+  button.addEventListener('click', () => {
+    currentSticker = name;
+  })
+
+  stickerBox.appendChild(button);
+  
+}
+
