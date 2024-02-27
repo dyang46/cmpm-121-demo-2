@@ -1,10 +1,8 @@
 import "./style.css";
 
 const app: HTMLDivElement = document.querySelector("#app")!;
-//const app1: HTMLDivElement = document.querySelector("#app")!;
 
-
-const gameName = "My Drawing Board";
+const gameName = "Drawing Board";
 
 document.title = gameName;
 
@@ -43,6 +41,13 @@ brushSize.innerHTML = "Current: Marker  Size: 1";
 
 const stickerBox = document.createElement("div");
 
+const slider: HTMLInputElement = document.createElement('input');
+slider.type = 'range';
+slider.min = '0';
+slider.max = '360';
+slider.value = '0';
+slider.id = 'rotation-slider';
+
 const stickerList = [ "🎆", "🎇", "💟"];
 
 app.append(header, clearButton,undoButton,redoButton);
@@ -53,12 +58,13 @@ const ctx = canvas.getContext('2d')!;
 
 // Drawing variables
 let isDrawing = false;
-ctx.strokeStyle = '#000000'; // Hardcoded line color for now
+
+let hue = parseInt(slider.value);
 let widthRate = 1;
 ctx.lineWidth = widthRate;
 
 let currentLine: MarkerLine | null = null;
-let lines: MarkerLine[] = [];
+let lines: MarkerLine[] = []; // all drawn lines
 let redoList: MarkerLine[] = [];
 let currentTool: "Marker" | "Sticker" = "Marker";
 let currentSticker: string | "🎆" = "🎆";
@@ -75,13 +81,12 @@ canvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   const { x, y } = getCanvasCoordinates(e);
   if (currentTool== "Marker") {
-    currentLine = new MarkerLine(x, y, widthRate);
+    currentLine = new MarkerLine(x, y, widthRate,hue);
     lines.push(currentLine);
   } else {
-    currentLine = new StickerPos(x, y, widthRate, currentSticker);
+    currentLine = new StickerPos(x, y, widthRate, hue,currentSticker);
     lines.push(currentLine);
-  }
-    
+  } 
   
   //canvas.dispatchEvent(new Event("drawing-changed"));
 });
@@ -91,10 +96,10 @@ canvas.addEventListener("mousemove", (e) => {
   
   if (!isDrawing || !currentLine) {
     if (currentTool == "Marker") {
-      previewTool = new Preview(x, y, "Marker");
+      previewTool = new Preview(x, y, "Marker",hue);
       previewTool.draw(ctx);
     } else {
-      previewTool = new Preview(x, y, "Sticker");
+      previewTool = new Preview(x, y, "Sticker",hue);
       previewTool.draw(ctx);
     }
 
@@ -202,21 +207,32 @@ exportButton.addEventListener("click", () => {
   anchor.click();
 });
 
+slider.addEventListener("input", () => {
+  hue = parseInt(slider.value);
+});
+
+
 app.appendChild(canvas);
-//app.append(undoButton, redoButton);
 app.append(changeTool,thickMarker, thinMarker, brushSize);
-app.append(custSticker);
+app.append(custSticker,exportButton);
 app.appendChild(stickerBox);
-app.append(exportButton);
+app.append(slider);
+
+slider.addEventListener('input', () => {
+
+  console.log(slider.value); // Just an example action
+});
 
 /////Class//// 
 /////the class structure is from chatGPT
 class MarkerLine {
   private pos: { x: number; y: number }[] = [];
   private thick: number;
-  constructor(initX: number, initY: number,thick: number) {
+  private color: number
+  constructor(initX: number, initY: number,thick: number,color:number) {
     this.pos.push({ x: initX, y: initY });
     this.thick = thick;    
+    this.color = color;
   }
 
   drag(x: number, y: number): void {
@@ -230,6 +246,7 @@ class MarkerLine {
       
     ctx.beginPath();
     ctx.lineWidth = this.thick;
+    ctx.strokeStyle = `hsl(${this.color}, 100%, 50%)`;
     this.pos.forEach((pos, index) => {
       if (index === 0) {
         ctx.moveTo(pos.x, pos.y);
@@ -242,18 +259,20 @@ class MarkerLine {
 }
 /////the end of citing
 
-
+//to draw sticker
 class StickerPos extends MarkerLine {
   private content: string; 
   private x: number;
   private y: number;
   private initSize: number;
-  constructor(initX: number, initY: number,thick: number,content: string) {
-    super(initX,initY,thick);
+
+  constructor(initX: number, initY: number,thick: number,color:number,content: string) {
+    super(initX,initY,thick,color);
     this.x = initX;
     this.y = initY;
     this.content = content; 
     this.initSize = thick;
+
   }
 
   drag(x: number, y: number): void {
@@ -264,25 +283,30 @@ class StickerPos extends MarkerLine {
 
   display(ctx: CanvasRenderingContext2D): void {
 
-    ctx.font = `${this.initSize*10}px Arial`;
+    ctx.font = `${this.initSize * 10}px Arial`;
+
     ctx.fillText(this.content, this.x,this.y);
   }
 }
 
+//to control preview
 class Preview{
   private x: number;
   private y: number;
   private toolType: string;
-  constructor(x: number, y: number, toolType: string) {
+  private color: number;
+  constructor(x: number, y: number, toolType: string, color: number) {
     this.x = x;
     this.y = y;
     this.toolType = toolType;
+    this.color = color;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
  
     canvas.dispatchEvent(new Event("tool-moved"));
     if (this.toolType == "Marker") {
+      ctx.strokeStyle = `hsl(${this.color}, 100%, 50%)`;
       ctx.beginPath();
       ctx.arc(this.x, this.y, widthRate, 0, 2 * Math.PI);
       ctx.stroke();
