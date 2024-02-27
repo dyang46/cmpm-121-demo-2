@@ -53,7 +53,6 @@ const ctx = canvas.getContext('2d')!;
 
 // Drawing variables
 let isDrawing = false;
-//ctx.lineWidth = 1; // Hardcoded line width for now
 ctx.strokeStyle = '#000000'; // Hardcoded line color for now
 let widthRate = 1;
 ctx.lineWidth = widthRate;
@@ -324,8 +323,7 @@ function AddSticker(name: string) {
       button.id = note;
     }
   });
-  stickerBox.appendChild(button);
-  
+  stickerBox.appendChild(button);  
 }
 
 
